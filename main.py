@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, VideoUnavailable
 from urllib.parse import urlparse, parse_qs
+from typing import Literal
 import anthropic
 import os
 from dotenv import load_dotenv
@@ -19,6 +20,13 @@ app.add_middleware(
 )
 
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+SYSTEM_PROMPT = (
+    "You are a precise assistant that answers questions about a single source transcript. "
+    "Base every answer strictly on the transcript text provided. Do not use outside knowledge. "
+    "If the answer is not present, say so plainly in one sentence. Keep answers clear and concise, "
+    "use short paragraphs, and quote the transcript briefly when it helps."
+)
 
 
 def extract_video_id(url: str) -> str:
@@ -37,23 +45,9 @@ def fetch_transcript(video_id: str) -> str:
     return " ".join(entry["text"] for entry in transcript)
 
 
-def ask_claude(transcript: str, question: str) -> str:
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=1024,
-        system=(
-            "You are a helpful assistant that answers questions about transcripts. "
-            "Base your answers strictly on the provided transcript. "
-            "If the answer is not in the transcript, say so clearly."
-        ),
-        messages=[
-            {
-                "role": "user",
-                "content": f"Transcript:\n\n{transcript}\n\n---\n\nQuestion: {question}",
-            }
-        ],
-    )
-    return message.content[0].text
+class Message(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
 
 
 class YoutubeRequest(BaseModel):
@@ -66,8 +60,17 @@ class TextRequest(BaseModel):
     question: str
 
 
+class ChatRequest(BaseModel):
+    transcript: str
+    messages: list[Message]
+
+
 class TranscriptResponse(BaseModel):
     transcript: str
+    answer: str
+
+
+class ChatResponse(BaseModel):
     answer: str
 
 
@@ -87,16 +90,43 @@ def ask_youtube(req: YoutubeRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch transcript: {e}")
 
-    answer = ask_claude(transcript, req.question)
-    return TranscriptResponse(transcript=transcript, answer=answer)
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        system=f"{SYSTEM_PROMPT}\n\n=== TRANSCRIPT ===\n{transcript}\n=== END TRANSCRIPT ===",
+        messages=[{"role": "user", "content": req.question}],
+    )
+    return TranscriptResponse(transcript=transcript, answer=message.content[0].text)
 
 
 @app.post("/ask/text", response_model=TranscriptResponse)
 def ask_text(req: TextRequest):
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty.")
-    answer = ask_claude(req.text, req.question)
-    return TranscriptResponse(transcript=req.text, answer=answer)
+
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        system=f"{SYSTEM_PROMPT}\n\n=== TRANSCRIPT ===\n{req.text}\n=== END TRANSCRIPT ===",
+        messages=[{"role": "user", "content": req.question}],
+    )
+    return TranscriptResponse(transcript=req.text, answer=message.content[0].text)
+
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(req: ChatRequest):
+    if not req.transcript.strip():
+        raise HTTPException(status_code=400, detail="Transcript cannot be empty.")
+    if not req.messages:
+        raise HTTPException(status_code=400, detail="Messages cannot be empty.")
+
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        system=f"{SYSTEM_PROMPT}\n\n=== TRANSCRIPT ===\n{req.transcript}\n=== END TRANSCRIPT ===",
+        messages=[{"role": m.role, "content": m.content} for m in req.messages],
+    )
+    return ChatResponse(answer=message.content[0].text)
 
 
 @app.get("/health")

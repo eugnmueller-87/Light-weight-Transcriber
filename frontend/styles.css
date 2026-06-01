@@ -1,0 +1,162 @@
+/* ============================================================
+   Lightweight Transcriber — design tokens & base styles
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg:          #F4F3EE;
+  --bg-2:        #ECEAE2;
+  --surface:     #FFFFFF;
+  --surface-2:   #FBFBF9;
+  --ink:         #16161A;
+  --ink-soft:    #45454E;
+  --ink-mute:    #8C8C95;
+  --ink-faint:   #B6B6BD;
+  --line:        #E3E1D9;
+  --line-strong: #D2CFC4;
+
+  --accent:      #EC4419;
+  --accent-deep: #C8350F;
+  --accent-soft: #FBE7DF;
+  --accent-ink:  #FFFFFF;
+
+  --good:        #2F7D55;
+  --good-soft:   #E2F0E8;
+
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-body:    'Hanken Grotesk', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  --r-xs: 4px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 26px;
+
+  --sh-sm: 0 1px 2px rgba(22,22,26,0.04), 0 1px 1px rgba(22,22,26,0.03);
+  --sh-md: 0 4px 16px rgba(22,22,26,0.06), 0 1px 3px rgba(22,22,26,0.05);
+  --sh-lg: 0 18px 50px rgba(22,22,26,0.12), 0 4px 14px rgba(22,22,26,0.06);
+
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+[data-theme="dark"] {
+  --bg:          #131316;
+  --bg-2:        #0D0D0F;
+  --surface:     #1C1C20;
+  --surface-2:   #232328;
+  --ink:         #F3F2EE;
+  --ink-soft:    #BFBEC6;
+  --ink-mute:    #87868F;
+  --ink-faint:   #5A5A63;
+  --line:        #2C2C32;
+  --line-strong: #3A3A42;
+  --accent-soft: #3A1A10;
+  --good-soft:   #16261D;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--accent); color: #fff; }
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, textarea { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 20px; border: 3px solid var(--bg); }
+*::-webkit-scrollbar-track { background: transparent; }
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.app-root {
+  min-height: 100vh;
+  transition: background var(--ease) 0.3s;
+}
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.no-anim *, .no-anim *::before, .no-anim *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@keyframes fadeUp {
+  from { transform: translateY(16px); }
+  to   { transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { transform: translateY(4px); }
+  to   { transform: translateY(0); }
+}
+@keyframes barPulse {
+  0%, 100% { transform: scaleY(0.35); }
+  50%      { transform: scaleY(1); }
+}
+
+/* transcript panel */
+.transcript-panel {
+  flex: 0 0 0px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  overflow: hidden;
+  transition: flex-basis 0.28s var(--ease);
+}
+.panel-close { display: none; }
+
+@media (max-width: 860px) {
+  .transcript-panel {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: min(420px, 88vw) !important;
+    transform: translateX(-100%);
+    transition: transform 0.28s var(--ease);
+    z-index: 40;
+    box-shadow: var(--sh-lg);
+    border-right: 1px solid var(--line);
+  }
+  .transcript-panel.open { transform: translateX(0); }
+  .panel-close { display: inline-flex; }
+}
+
+@media (max-width: 620px) {
+  .nav-hide { display: none !important; }
+}
+
+/* theme toggle button */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  padding: 7px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  transition: all 0.15s var(--ease);
+}
+.theme-toggle:hover { color: var(--ink); border-color: var(--line-strong); }
