@@ -1,21 +1,23 @@
 # Start Transcriber
 
-## 1. Backend
+Open **two terminals** and run one command in each.
+
+## Terminal 1 — Backend
 ```
 uv run uvicorn main:app --reload
 ```
 
-## 2. Frontend
-Open in browser:
+## Terminal 2 — Frontend
 ```
-http://localhost:8000
+cd frontend
+uv run python -m http.server 3000
 ```
 
-Or open the file directly:
+## Then open in browser
 ```
-frontend/index.html
+http://localhost:3000
 ```
 
 ---
 
-API running at `http://localhost:8000` · Docs at `http://localhost:8000/docs`
+API running at `http://localhost:8000` · API docs at `http://localhost:8000/docs`
