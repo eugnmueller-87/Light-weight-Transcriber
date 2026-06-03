@@ -1,5 +1,7 @@
 # Light-weight Transcriber
 
+![demo](clip/demo.gif)
+
 ![Python](https://img.shields.io/badge/Python-3.14-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?logo=fastapi&logoColor=white)
 ![Claude](https://img.shields.io/badge/Powered%20by-Claude%20Sonnet-blueviolet?logo=anthropic&logoColor=white)
