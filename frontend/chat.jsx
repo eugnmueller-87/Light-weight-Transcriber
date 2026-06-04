@@ -1,4 +1,4 @@
-/* global React, Icons, Waveform, CopyButton, WorkHeader, API_BASE */
+/* global React, Icons, Waveform, CopyButton, WorkHeader, API_BASE, API_TOKEN */
 const { useState: useC, useEffect: useCE, useRef: useCR } = React;
 
 const STARTERS = [
@@ -44,7 +44,7 @@ function ChatWorkspace({ source, onBack }) {
     try {
       const res = await fetch(`${API_BASE}/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Api-Token": API_TOKEN },
         body: JSON.stringify({
           transcript: source.transcript,
           messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),

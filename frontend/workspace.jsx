@@ -2,6 +2,7 @@
 const { useState: useS, useRef: useR } = React;
 
 const API_BASE = "https://light-weight-transcriber-production.up.railway.app";
+const API_TOKEN = "transcriber-pub-2026";
 
 function extractVideoId(url) {
   try {
@@ -30,7 +31,7 @@ function SourceSetup({ initialMode, onLoad, onBack }) {
     try {
       const res = await fetch(`${API_BASE}/ask/youtube`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Api-Token": API_TOKEN },
         body: JSON.stringify({ url: url.trim(), question: "What is this video about? Give a one-sentence summary." }),
       });
       if (!res.ok) {
@@ -211,4 +212,4 @@ function WorkHeader({ onBack, title, right }) {
   );
 }
 
-Object.assign(window, { SourceSetup, WorkHeader, extractVideoId, API_BASE });
+Object.assign(window, { SourceSetup, WorkHeader, extractVideoId, API_BASE, API_TOKEN });

@@ -1,9 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, VideoUnavailable
 from urllib.parse import urlparse, parse_qs
-from typing import Literal
+from typing import Literal, Optional
 import anthropic
 import os
 from dotenv import load_dotenv
@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI(title="Transcriber API")
+
+API_TOKEN = os.getenv("API_TOKEN", "")
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,6 +31,11 @@ SYSTEM_PROMPT = (
 )
 
 
+def require_token(x_api_token: Optional[str] = Header(default=None)):
+    if API_TOKEN and x_api_token != API_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized.")
+
+
 def extract_video_id(url: str) -> str:
     parsed = urlparse(url)
     if parsed.hostname in ("youtu.be",):
@@ -41,8 +48,9 @@ def extract_video_id(url: str) -> str:
 
 
 def fetch_transcript(video_id: str) -> str:
-    transcript = YouTubeTranscriptApi.get_transcript(video_id)
-    return " ".join(entry["text"] for entry in transcript)
+    api = YouTubeTranscriptApi()
+    fetched = api.fetch(video_id, languages=["en", "de"])
+    return " ".join(snippet.text for snippet in fetched)
 
 
 class Message(BaseModel):
@@ -74,7 +82,7 @@ class ChatResponse(BaseModel):
     answer: str
 
 
-@app.post("/ask/youtube", response_model=TranscriptResponse)
+@app.post("/ask/youtube", response_model=TranscriptResponse, dependencies=[Depends(require_token)])
 def ask_youtube(req: YoutubeRequest):
     try:
         video_id = extract_video_id(req.url)
@@ -99,7 +107,7 @@ def ask_youtube(req: YoutubeRequest):
     return TranscriptResponse(transcript=transcript, answer=message.content[0].text)
 
 
-@app.post("/ask/text", response_model=TranscriptResponse)
+@app.post("/ask/text", response_model=TranscriptResponse, dependencies=[Depends(require_token)])
 def ask_text(req: TextRequest):
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty.")
@@ -113,7 +121,7 @@ def ask_text(req: TextRequest):
     return TranscriptResponse(transcript=req.text, answer=message.content[0].text)
 
 
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chat", response_model=ChatResponse, dependencies=[Depends(require_token)])
 def chat(req: ChatRequest):
     if not req.transcript.strip():
         raise HTTPException(status_code=400, detail="Transcript cannot be empty.")
