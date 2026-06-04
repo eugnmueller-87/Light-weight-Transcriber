@@ -1,7 +1,7 @@
 /* global React, Icons, Waveform, Logo */
 const { useState: useS, useRef: useR } = React;
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://light-weight-transcriber-production.up.railway.app";
 
 function extractVideoId(url) {
   try {
